@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shimuristeno – Dictation & Transcription Practice</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600&family=Hanken+Grotesk:wght@400;600;700&display=swap">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--paper:#e4efe1;--card:#f5faf3;--ink:#1c2b3a;--mute:#5a6b5f;--line:#b9cdb6;--red:#c0392b;--accent:#1f4e79;--ok:#1e7a3c;--warn:#b26a00;--bad:#b3261e;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#0f1a14;--card:#16241c;--ink:#e3eee6;--mute:#93a99a;--line:#2c4034;--red:#ff7b6b;--accent:#7fb4e8;--ok:#5fd18a;--warn:#f0b455;--bad:#ff8a80;color-scheme:dark}}
+:root[data-theme="dark"]{--paper:#0f1a14;--card:#16241c;--ink:#e3eee6;--mute:#93a99a;--line:#2c4034;--red:#ff7b6b;--accent:#7fb4e8;--ok:#5fd18a;--warn:#f0b455;--bad:#ff8a80;color-scheme:dark}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 "Hanken Grotesk",system-ui,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:16px}
+h1{font:600 28px/1.1 Spectral,Georgia,serif;margin:8px 0 2px}
+.sub{color:var(--mute);margin:0 0 14px}
+nav{display:flex;gap:4px;border-bottom:2px solid var(--red);overflow-x:auto}
+nav button{flex:1;min-width:max-content;background:transparent;border:0;padding:10px 14px;font:600 15px inherit;font-family:inherit;color:var(--mute);cursor:pointer;border-radius:8px 8px 0 0}
+nav button[aria-selected=true]{background:var(--card);color:var(--ink);box-shadow:inset 0 3px 0 var(--accent)}
+section{display:none;background:var(--card);border:1px solid var(--line);border-top:0;padding:16px;border-radius:0 0 10px 10px}
+section.on{display:block}
+label{display:block;font-weight:600;margin:12px 0 4px}
+textarea,input,select{width:100%;font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+textarea{font-family:Spectral,Georgia,serif;font-size:18px;line-height:28px;min-height:240px;resize:vertical;border-left:3px solid var(--red);
+background-image:repeating-linear-gradient(transparent 0 27px,var(--line) 27px 28px);background-attachment:local}
+textarea.sm{min-height:70px;font-size:15px;line-height:1.4;background-image:none}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}.row>*{flex:1;min-width:130px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.chips button,.btn{font:600 14px inherit;font-family:inherit;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:7px 12px;border-radius:6px;cursor:pointer}
+.chips button.on{background:var(--accent);color:var(--card);border-color:var(--accent)}
+.btn.main{background:var(--accent);color:var(--card);border-color:var(--accent);padding:10px 18px;font-size:16px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.stats{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0}
+.stat b{display:block;font:600 26px/1 Spectral,Georgia,serif}.stat span{color:var(--mute);font-size:13px}
+.bar{height:8px;background:var(--paper);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:10px 0}
+.bar i{display:block;height:100%;width:0;background:var(--accent)}
+.clock{font:600 44px/1 Spectral,Georgia,serif;font-variant-numeric:tabular-nums}.clock.low{color:var(--bad)}
+.note{color:var(--mute);font-size:14px}
+.verdict{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:12px 0}
+.v{border:2px solid var(--line);border-radius:8px;padding:10px}.v.pass{border-color:var(--ok)}.v.fail{border-color:var(--bad)}
+.v b{font:600 20px Spectral,Georgia,serif}
+.ann{font:18px/2 Spectral,Georgia,serif;border:1px solid var(--line);border-radius:6px;padding:12px;background:var(--paper);max-height:420px;overflow:auto}
+.ann del{color:var(--bad);text-decoration:line-through;margin-right:3px}.ann ins{color:var(--warn);text-decoration:underline wavy;margin-right:3px}
+.ann .cap{background:color-mix(in srgb,var(--warn) 25%,transparent)}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+.hide{display:none}
+.gen{border:1px dashed var(--line);border-radius:8px;padding:0 12px 12px;margin-bottom:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Shimuristeno</h1>
+<p class="sub">Practise dictation and transcription, then get checked the way the exam checks you.</p>
+<nav role="tablist" id="tabs">
+<button role="tab" data-t="p" aria-selected="true">1. Passage</button>
+<button role="tab" data-t="d" aria-selected="false">2. Dictation</button>
+<button role="tab" data-t="t" aria-selected="false">3. Transcription</button>
+<button role="tab" data-t="r" aria-selected="false">4. Result</button>
+</nav>
+
+<section id="p" class="on">
+<div class="gen">
+<div class="row">
+<div><label for="gtype">Generate a passage</label><select id="gtype"><option>newspaper article</option><option>office letter or official report</option><option>government notice or circular</option><option>short story</option><option>speech</option><option>science and technology essay</option><option>essay on a social issue</option></select></div>
+<div><label for="gtopic">Topic (optional)</label><input id="gtopic" placeholder="e.g. rural education"></div>
+<div style="max-width:110px;min-width:90px"><label for="glen">Words</label><input id="glen" type="number" min="50" max="1000" value="500"></div>
+</div>
+<div class="row" style="justify-content:flex-start;margin-top:10px"><button class="btn main" id="gen" style="flex:0;min-width:max-content">Generate passage</button><button class="btn" id="gsample" style="flex:0;min-width:max-content">Random passage</button><span class="note" id="gmsg" style="flex:1 1 200px"></span></div>
+<details style="margin-top:10px"><summary>Use my own API key (needed when hosted outside Claude)</summary><div class="row"><div><input id="gkey" type="password" placeholder="Paste your Anthropic API key" autocomplete="off"></div><button class="btn" id="gkeySave" style="flex:0;min-width:max-content">Save key</button><button class="btn" id="gkeyClear" style="flex:0;min-width:max-content">Remove</button></div><p class="note">The key is kept only in this browser and sent only to Anthropic. Each passage uses a small amount of API credit. Do not save a key on a shared computer.</p></details>
+</div>
+<label for="passage">Paste or type your passage</label>
+<textarea id="passage" placeholder="Paste a paragraph here, or type any words…" spellcheck="false"></textarea>
+<div class="stats">
+<div class="stat"><b id="wc">0</b><span>words (exam count, without full stops and commas)</span></div>
+<div class="stat"><b id="wc2">0</b><span>words (plain count)</span></div>
+<div class="stat"><b id="cc">0</b><span>characters</span></div>
+<div class="stat"><b id="est">–</b><span>time at your dictation speed</span></div>
+</div>
+<label for="variants">Accepted alternative spellings (optional)</label>
+<textarea id="variants" class="sm" spellcheck="false" placeholder="One group per line, separated by =&#10;honourable = hon'ble = Hon&#10;judgement = judgment"></textarea>
+<p class="note">Any form in a group is accepted as correct when checking, as the exam’s alternative-spellings list does. Use single words only. Numbers need no entry here: digits and words are accepted automatically (10000 and ten thousand, 20th and twentieth century).</p>
+</section>
+
+<section id="d">
+<div class="row">
+<div><label for="wpm">Speed (words per minute)</label><input id="wpm" type="number" min="5" max="200" value="10">
+<div class="chips" id="wpmChips"></div></div>
+<div><label for="mins">Dictation length (minutes)</label><input id="mins" type="number" min="0.5" max="30" step="0.5" value="1">
+<div class="chips" id="minChips"></div></div>
+</div>
+<label for="voice">Voice</label>
+<select id="voice"></select>
+<p class="note" id="voiceNote"></p>
+<div class="stats">
+<div class="stat"><b id="dWords">0</b><span>words will be dictated</span></div>
+<div class="stat"><b id="dSpoken">0</b><span>words spoken</span></div>
+<div class="stat"><b id="dClock">0:00</b><span>elapsed</span></div>
+</div>
+<div class="bar"><i id="dBar"></i></div>
+<div class="row" style="justify-content:flex-start">
+<button class="btn main" id="dStart" style="flex:0">Start dictation</button>
+<button class="btn" id="dPause" style="flex:0" disabled>Pause</button>
+<button class="btn" id="dStop" style="flex:0" disabled>Stop</button>
+</div>
+<p class="note" id="dMsg">Dictation starts after a 3-second countdown. The passage is hidden while it is dictated, so write it in shorthand.</p>
+</section>
+
+<section id="t">
+<div class="row">
+<div><label for="tmins">Transcription time (minutes)</label><input id="tmins" type="number" min="1" max="180" value="45">
+<div class="chips" id="tChips"></div></div>
+<div><div class="clock" id="tClock">45:00</div></div>
+</div>
+<div class="row" style="justify-content:flex-start;margin:10px 0">
+<button class="btn main" id="tStart" style="flex:0">Start timer</button>
+<button class="btn" id="tPause" style="flex:0" disabled>Pause</button>
+<button class="btn" id="tReset" style="flex:0">Reset</button>
+</div>
+<label for="typed">Type your transcription (the timer starts when you type)</label>
+<textarea id="typed" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="Type what you wrote in shorthand…"></textarea>
+<div class="row" style="margin-top:10px"><div class="note" id="tWc">0 words typed</div>
+<button class="btn main" id="check" style="flex:0;min-width:max-content">Check my transcription</button></div>
+</section>
+
+<section id="r">
+<div id="empty" class="note">Type a transcription and press “Check my transcription” to see your result.</div>
+<div id="out" class="hide">
+<label for="scope">Compare against</label>
+<select id="scope"><option value="dict">Only the part that was dictated</option><option value="all">The whole passage</option></select>
+<div class="stats">
+<div class="stat"><b id="rPct">0%</b><span>mistakes (exam formula)</span></div>
+<div class="stat"><b id="rErr">0</b><span>mistakes found</span></div>
+<div class="stat"><b id="rN">0</b><span>words in original</span></div>
+</div>
+<div class="verdict" id="verdict"></div>
+<p class="note">Formula from the guidelines: (half-mistakes ÷ 2) × 100 ÷ words in the original passage, rounded to two decimals. Full stops and commas are ignored.</p>
+<h3>Mistakes by type</h3><div class="tw"><table id="cats"></table></div>
+<h3>Your passage, marked</h3>
+<p class="note"><del style="color:var(--bad)">Struck red</del> = word missed or wrong (original shown). <ins style="color:var(--warn)">Wavy orange</ins> = what you typed instead or added extra.</p>
+<div class="ann" id="ann"></div>
+<h3>Mistake list</h3><div class="tw"><table id="list"></table></div>
+</div>
+</section>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const tok=t=>t.replace(/[’‘]/g,"'").replace(/[.,](?=\s|$)/g,'').trim().split(/\s+/).filter(Boolean);
+const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+let dictated=null;
+
+/* tabs */
+function show(t){document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id===t))}
+$('tabs').onclick=e=>{const t=e.target.dataset&&e.target.dataset.t;if(t)show(t)};
+
+/* chips */
+function chips(el,vals,input,fmt,cb){vals.forEach(v=>{const b=document.createElement('button');b.textContent=fmt(v);b.onclick=()=>{input.value=v;mark();cb&&cb()};el.appendChild(b)});
+const mark=()=>[...el.children].forEach((b,i)=>b.classList.toggle('on',+input.value===vals[i]));input.addEventListener('input',()=>{mark();cb&&cb()});mark()}
+
+/* passage */
+function pInfo(){const t=$('passage').value;const n=tok(t).length;
+$('wc').textContent=n;$('wc2').textContent=t.trim()?t.trim().split(/\s+/).length:0;$('cc').textContent=t.length;
+const w=+$('wpm').value||1;$('est').textContent=n?(n/w).toFixed(1)+' min @ '+w+' wpm':'–';
+$('dWords').textContent=Math.min(n,Math.round(w*(+$('mins').value||0)));
+try{localStorage.setItem('steno_passage',t)}catch(e){}}
+$('passage').addEventListener('input',pInfo);
+try{$('passage').value=localStorage.getItem('steno_passage')||''}catch(e){}
+chips($('wpmChips'),[10,20,30,40,50,60,80,100],$('wpm'),v=>v,pInfo);
+chips($('minChips'),[1,2,3,4,5,10],$('mins'),v=>v+' min',pInfo);
+chips($('tChips'),[10,30,40,45,60],$('tmins'),v=>v+' min',()=>{if(!tRun&&!tLeft)tReset()});
+pInfo();
+
+/* voices */
+let voices=[];
+function loadVoices(){const all=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang));
+const rank=v=>/en[-_]IN/i.test(v.lang)?0:/en[-_]GB/i.test(v.lang)?1:2;
+voices=all.sort((a,b)=>rank(a)-rank(b));const s=$('voice');const cur=s.value;s.innerHTML='';
+voices.forEach((v,i)=>{const o=document.createElement('option');o.value=i;o.textContent=v.name+' ('+v.lang+')'+(rank(v)==0?' – Indian English':rank(v)==1?' – British English':'');s.appendChild(o)});
+if(cur)s.value=cur;
+$('voiceNote').textContent=!voices.length?'No English voices found on this device. Try Chrome or Edge, or install an English voice in your system settings.':
+rank(voices[0])==0?'Indian English voice selected. British accent voices are listed next.':rank(voices[0])==1?'No Indian English voice on this device, so a British voice is selected. On Android, install “English (India)” in text-to-speech settings. Edge on Windows has Indian voices.':'No Indian or British voice found. Pick the closest English voice from the list.'}
+if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}else $('voiceNote').textContent='This browser does not support speech. Use Chrome, Edge or Safari.';
+
+/* dictation */
+let run=0,cur=0,chunks=[],t0=0,paused=false,elapsedTimer=null,tCount=null;
+function setBtn(r){$('dStart').disabled=r;$('dPause').disabled=!r;$('dStop').disabled=!r}
+function dStatus(m){$('dMsg').textContent=m}
+function startD(){
+const words=$('passage').value.trim().split(/\s+/).filter(Boolean);
+if(!words.length){dStatus('Add a passage in step 1 first.');show('p');return}
+if(!voices.length){dStatus('No voice available on this device.');return}
+const wpm=clamp(+$('wpm').value||10,5,250),mins=+$('mins').value||1;
+let lim=Math.round(wpm*mins);
+// exam count ignores stray punctuation tokens
+const take=[];let c=0;for(const w of words){take.push(w);if(tok(w).length&&++c>=lim)break}
+dictated={count:c,wpm};
+const cs=wpm<=30?2:wpm<=60?3:4;chunks=[];for(let i=0;i<take.length;i+=cs)chunks.push(take.slice(i,i+cs));
+speechSynthesis.cancel();const id=++run;cur=0;paused=false;setBtn(true);$('dPause').textContent='Pause';
+let n=3;dStatus('Get ready… '+n);const cd=setInterval(()=>{if(id!==run){clearInterval(cd);return}n--;if(n>0)dStatus('Get ready… '+n);else{clearInterval(cd);begin(id)}},1000)}
+function begin(id){dStatus('Dictating at '+dictated.wpm+' wpm…');t0=Date.now();go(id)}
+function slot(){return chunks[0]?chunks[0].length*60000/dictated.wpm:1000}
+function go(id){
+if(id!==run)return;
+$('dBar').style.width=(cur/chunks.length*100)+'%';
+if(cur>=chunks.length){setBtn(false);$('dBar').style.width='100%';clearInterval(elapsedTimer);dStatus('Dictation finished. Go to Transcription and type what you wrote.');return}
+const target=t0+cur*slot();const wait=Math.max(0,target-Date.now());
+setTimeout(()=>{if(id!==run||paused)return;
+const u=new SpeechSynthesisUtterance(chunks[cur].join(' '));const v=voices[+$('voice').value||0];
+if(v){u.voice=v;u.lang=v.lang}else u.lang='en-GB';
+u.rate=clamp(dictated.wpm/150,.6,1.4);
+u.onend=()=>{if(id!==run)return;$('dSpoken').textContent=Math.min(dictated.count,(cur+1)*chunks[0].length);cur++;go(id)};
+u.onerror=()=>{if(id!==run)return;cur++;go(id)};
+speechSynthesis.speak(u)},wait)}
+$('dStart').onclick=()=>{$('dSpoken').textContent=0;$('dBar').style.width='0';clearInterval(elapsedTimer);const s=Date.now()+3000;
+elapsedTimer=setInterval(()=>{const e=Math.max(0,Math.floor((Date.now()-s)/1000));$('dClock').textContent=Math.floor(e/60)+':'+String(e%60).padStart(2,'0')},500);startD()};
+$('dPause').onclick=()=>{if(!paused){paused=true;run++;speechSynthesis.cancel();$('dPause').textContent='Resume';dStatus('Paused.')}
+else{paused=false;const id=++run;t0=Date.now()-cur*slot();$('dPause').textContent='Pause';dStatus('Dictating at '+dictated.wpm+' wpm…');go(id)}};
+$('dStop').onclick=()=>{run++;paused=false;speechSynthesis.cancel();clearInterval(elapsedTimer);setBtn(false);$('dPause').textContent='Pause';dStatus('Stopped.')};
+$('wpm').addEventListener('input',pInfo);$('mins').addEventListener('input',pInfo);
+
+/* transcription timer */
+let tLeft=0,tRun=false,tInt=null,tEnd=0;
+const fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+function tReset(){clearInterval(tInt);tRun=false;tLeft=0;$('typed').readOnly=false;$('tClock').textContent=fmt((+$('tmins').value||45)*60);$('tClock').classList.remove('low');$('tStart').disabled=false;$('tPause').disabled=true}
+function tStart(){if(tRun)return;if(!tLeft)tLeft=Math.round((+$('tmins').value||45)*60);tRun=true;tEnd=Date.now()+tLeft*1000;$('tStart').disabled=true;$('tPause').disabled=false;
+tInt=setInterval(()=>{tLeft=Math.max(0,Math.round((tEnd-Date.now())/1000));$('tClock').textContent=fmt(tLeft);$('tClock').classList.toggle('low',tLeft<=300);
+if(!tLeft){clearInterval(tInt);tRun=false;$('typed').readOnly=true;$('tPause').disabled=true;$('tClock').textContent='00:00';$('check').scrollIntoView({block:'center'})}},250)}
+$('tStart').onclick=tStart;
+$('tPause').onclick=()=>{clearInterval(tInt);tRun=false;$('tStart').disabled=false;$('tStart').textContent='Resume';$('tPause').disabled=true};
+$('tReset').onclick=()=>{tReset();$('tStart').textContent='Start timer'};
+$('tmins').addEventListener('input',()=>{if(!tRun&&!tLeft)tReset()});
+$('typed').addEventListener('input',()=>{if(!tRun&&tLeft===0)tStart();$('tWc').textContent=tok($('typed').value).length+' words typed'});
+tReset();
+
+/* analysis */
+function lev(a,b){const m=a.length,n=b.length;let p=Array.from({length:n+1},(_,i)=>i);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
+function groups(){const g={};$('variants').value.split('\n').forEach((l,i)=>{l.split('=').map(x=>x.trim().replace(/[’‘]/g,"'").replace(/[.,]$/,'').toLowerCase()).filter(Boolean).forEach(w=>g[w]=i+1)});return g}
+function kind(a,b){const A=a.toLowerCase(),B=b.toLowerCase();
+if(A===B)return'Capitalisation';
+if(A+'s'===B||A+'es'===B||B+'s'===A||B+'es'===A||A.replace(/y$/,'ies')===B||B.replace(/y$/,'ies')===A||(A==='woman'&&B==='women')||(A==='women'&&B==='woman')||(A==='man'&&B==='men')||(A==='men'&&B==='man'))return'Singular/plural';
+if(lev(A,B)<=Math.max(2,Math.ceil(A.length*.34)))return'Spelling';return'Wrong word'}
+const NU={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90};
+const OR={first:1,second:2,third:3,fourth:4,fifth:5,sixth:6,seventh:7,eighth:8,ninth:9,tenth:10,eleventh:11,twelfth:12,thirteenth:13,fourteenth:14,fifteenth:15,sixteenth:16,seventeenth:17,eighteenth:18,nineteenth:19,twentieth:20,thirtieth:30,fortieth:40,fiftieth:50,sixtieth:60,seventieth:70,eightieth:80,ninetieth:90};
+const MU={hundred:100,thousand:1e3,lakh:1e5,million:1e6,crore:1e7,billion:1e9};
+const h=(o,x)=>Object.prototype.hasOwnProperty.call(o,x);
+const isNW=w=>w.toLowerCase().split('-').every(x=>h(NU,x)||h(OR,x)||h(MU,x));
+/* merge numbers written as digits or words into one comparable unit: {t: text shown, k: comparison key} */
+function units(a){const out=[];let i=0;
+while(i<a.length){const w=a[i];let m;
+if(/^\d[\d,]*$/.test(w)){out.push({t:w,k:'N:'+w.replace(/,/g,'')});i++;continue}
+if(m=w.match(/^(\d+)(st|nd|rd|th)$/i)){let t=w,k='O:'+m[1];i++;
+if(a[i]&&a[i].toLowerCase()==='century'){t+=' '+a[i];k+=' century';i++}
+out.push({t,k});continue}
+let j=i,tot=0,cur=0,ord=false,any=false,lm=false;
+while(j<a.length&&!ord){const lw=a[j].toLowerCase();
+if(lw==='and'&&lm&&j+1<a.length&&isNW(a[j+1])){j++;continue}
+if(!isNW(lw))break;const p=lw.split('-');
+for(const x of p){if(h(NU,x))cur+=NU[x];else if(h(OR,x)){cur+=OR[x];ord=true}else if(x==='hundred')cur=(cur||1)*100;else{tot+=(cur||1)*MU[x];cur=0}}
+lm=h(MU,p[p.length-1]);any=true;j++}
+if(any){let t=a.slice(i,j).join(' '),k=(ord?'O:':'N:')+(tot+cur);
+if(ord&&a[j]&&a[j].toLowerCase()==='century'){t+=' '+a[j];k+=' century';j++}
+out.push({t,k});i=j}else{out.push({t:w,k:w});i++}}
+return out}
+function analyse(){
+const typedRaw=tok($('typed').value);let ref=tok($('passage').value);
+if(!ref.length){show('p');return}
+if($('scope').value==='dict'&&dictated)ref=ref.slice(0,dictated.count);
+const N=ref.length,refU=units(ref),typU=units(typedRaw),refT=refU.map(u=>u.t),typT=typU.map(u=>u.t);ref=refU.map(u=>u.k);const typedT=typU.map(u=>u.k);
+const G=groups(),eq=(a,b)=>a===b||(G[a.toLowerCase()]&&G[a.toLowerCase()]===G[b.toLowerCase()]);
+const n=ref.length,m=typedT.length,W=m+1,d=new Int32Array((n+1)*W),op=new Uint8Array((n+1)*W);
+for(let i=1;i<=n;i++){d[i*W]=i;op[i*W]=2}for(let j=1;j<=m;j++){d[j]=j;op[j]=3}
+for(let i=1;i<=n;i++)for(let j=1;j<=m;j++){
+let best,o;const x=d[(i-1)*W+j-1],same=eq(ref[i-1],typedT[j-1]);
+best=x+(same?0:1);o=same?0:1;
+if(d[(i-1)*W+j]+1<best){best=d[(i-1)*W+j]+1;o=2}
+if(d[i*W+j-1]+1<best){best=d[i*W+j-1]+1;o=3}
+for(let k=2;k<=3&&j-k>=0;k++){const jn=typedT.slice(j-k,j).join('');if(eq(ref[i-1],jn)&&d[(i-1)*W+j-k]+1<best){best=d[(i-1)*W+j-k]+1;o=3+k}}
+d[i*W+j]=best;op[i*W+j]=o}
+const items=[];let i=n,j=m;
+while(i>0||j>0){const o=op[i*W+j];
+if(o===0){items.push({t:'ok',r:refT[i-1]});i--;j--}
+else if(o===1){items.push({t:'sub',r:refT[i-1],y:typT[j-1]});i--;j--}
+else if(o===2){items.push({t:'del',r:refT[i-1]});i--}
+else if(o===3){items.push({t:'ins',y:typT[j-1]});j--}
+else{const k=o-3;items.push({t:'split',r:refT[i-1],y:typT.slice(j-k,j).join(' ')});i--;j-=k}}
+items.reverse();
+const cats={};let errs=0;const list=[];
+items.forEach(it=>{if(it.t==='ok')return;errs++;
+it.c=it.t==='sub'?kind(it.r,it.y):it.t==='del'?'Omission':it.t==='ins'?'Addition':'Space inside a word';
+cats[it.c]=(cats[it.c]||0)+1;list.push(it)});
+const pct=Math.round((errs/2)/N*100*100)/100;
+$('empty').classList.add('hide');$('out').classList.remove('hide');
+$('rPct').textContent=pct.toFixed(2)+'%';$('rErr').textContent=errs;$('rN').textContent=N;
+$('verdict').innerHTML=[['General',8],['APST',10]].map(([k,l])=>{const ok=pct<=l;return `<div class="v ${ok?'pass':'fail'}"><b>${k}: ${ok?'Qualified':'Not qualified'}</b><br><span class="note">Limit ${l}%. You scored ${pct.toFixed(2)}%.</span></div>`}).join('');
+$('cats').innerHTML='<tr><th>Type</th><th>Count</th></tr>'+(Object.keys(cats).length?Object.entries(cats).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join(''):'<tr><td colspan=2>No mistakes. Well done!</td></tr>');
+$('ann').innerHTML=items.map(it=>it.t==='ok'?esc(it.r):it.t==='del'?`<del>${esc(it.r)}</del>`:it.t==='ins'?`<ins>${esc(it.y)}</ins>`:`<del>${esc(it.r)}</del><ins${it.c==='Capitalisation'?' class="cap"':''}>${esc(it.y)}</ins>`).join(' ');
+$('list').innerHTML='<tr><th>#</th><th>Type</th><th>Original</th><th>You typed</th></tr>'+list.map((it,k)=>`<tr><td>${k+1}</td><td>${it.c}</td><td>${esc(it.r||'–')}</td><td>${esc(it.y||'–')}</td></tr>`).join('');
+}
+$('check').onclick=()=>{if(!$('typed').value.trim()){alert('Type your transcription first.');return}clearInterval(tInt);tRun=false;show('r');analyse()};
+$('scope').onchange=analyse;
+
+/* passage generator */
+const SAMPLE=`A public library is one of the most valuable institutions that a society can build, and yet its quiet contribution is often overlooked. For many families, the library is the only place where books, newspapers and reliable information can be used without payment. A student who cannot afford textbooks, a farmer who wishes to learn about better methods of cultivation, and a retired teacher who wants to read in peace all find something useful within its walls. In this sense, the library serves the whole community and does not favour any one group over another.
+
+In the past, the work of a library was simple. Books were purchased, catalogued and lent to members for a fixed period, and the librarian ensured that they were returned in good condition. Today, the responsibilities are much wider. Most libraries now provide computers, internet access and training in basic digital skills, so that citizens can apply for jobs, fill in government forms and communicate with distant relatives. Many offer reading rooms for children, where stories are read aloud and young minds are encouraged to think and imagine. Some arrange lectures, exhibitions and discussions, which bring people of different ages and backgrounds together. Such events turn a quiet reading room into a lively centre of local life.
+
+The benefits of such services are considerable. Research has repeatedly shown that children who read regularly perform better in school and develop a stronger command of language. Adults who continue to read throughout their lives remain mentally active and are better informed about the issues that affect them. A well managed library also strengthens democracy, because citizens who have access to accurate information are able to question decisions, compare opinions and take part in public life with confidence.
+
+However, there are serious challenges that must be addressed. Many libraries in smaller towns and remote villages suffer from a lack of funds, trained staff and suitable buildings. Collections become old, roofs leak, and shelves stand half empty. Where there is no electricity or reliable connection, even the most modern equipment cannot be used. The government must therefore treat the library as an essential service and not as an optional extra. Regular grants, the recruitment of qualified librarians and the repair of existing buildings should form part of every development plan.
+
+Local communities also have an important duty. Citizens can donate books, volunteer their time and encourage their neighbours to become members. Schools can organise visits so that children develop the habit of reading early. Private companies can support libraries by providing equipment or sponsoring programmes for the young. When the government, the community and the private sector work together, the results are lasting and visible.
+
+In conclusion, a public library is not merely a collection of books. It is a place of learning, equality and hope. A nation that invests in its libraries invests in the minds of its people, and there is no better foundation for progress than a population that is curious, informed and willing to learn.`;
+function setPassage(t){$('passage').value=t;pInfo()}
+const BANK=[{y:'essay on a social issue',t:SAMPLE}].concat([{"y": "government notice or circular", "t": "It has come to the notice of the Government that the consumption of electricity and water in several offices has risen sharply during the last two years. The increase has placed an unnecessary burden on the public exchequer and has also put pressure on limited natural resources. All Heads of Departments are therefore requested to take immediate steps to reduce waste in the buildings under their control.\n\nThe following measures shall be followed with effect from the first day of next month. Lights, fans and air conditioners must be switched off when a room is not in use, and the last person to leave an office shall be responsible for checking this. Air conditioners shall be set at a temperature of not less than twenty four degrees. Computers and printers should not be left in standby mode after working hours. Wherever possible, ordinary bulbs shall be replaced with energy saving lamps, and the cost may be met from the contingency funds of the department.\n\nIn the same manner, every office shall inspect its water supply and repair leaking taps and pipes without delay. Water tanks should be cleaned regularly, and care must be taken to prevent overflow. Officers are encouraged to arrange the collection of rainwater in suitable buildings so that it can be used for gardens and cleaning.\n\nEach department shall appoint a senior officer as the nodal officer for this purpose. The nodal officer will prepare a monthly report showing the units of electricity and the quantity of water consumed, and will send it to the Department of Planning before the tenth day of the following month. A copy of the report should be displayed on the notice board so that all employees can see the progress made.\n\nHeads of Offices shall also ensure that awareness is created among the staff through short meetings and posters placed in corridors, canteens and meeting halls. Training sessions may be arranged in cooperation with the Energy Development Agency, whose experts are ready to guide officers on the proper use of electrical equipment. Cleaning staff and security personnel should be instructed to report any lights or machines left running at night. Purchases of new equipment shall be made only after checking its energy rating, and preference must be given to products that consume less power. The vehicles of the department should also be used with care, and officers who live nearby are encouraged to share transport whenever it is convenient. Any officer or employee who has a useful suggestion for saving resources may send it in writing to the nodal officer, and the best suggestions will be shared with all departments for adoption.\n\nThe Government believes that small and steady efforts, made by every employee, will bring about a visible saving. Compliance with these instructions will be reviewed after six months, and departments that achieve notable reductions will be recognised. All officers are requested to bring the contents of this circular to the attention of their staff and to ensure strict observance."}, {"y": "office letter or official report", "t": "I have the honour to submit my report on the inspection of government primary schools in the district, which I carried out between the second and the twelfth of last month. During this period, I visited thirty eight schools, spoke with teachers, parents and members of the village education committees, and examined the registers and records maintained in each school.\n\nI am glad to report that the general condition of the schools has improved when compared with the previous year. Most of the buildings are in good repair, and the supply of textbooks was completed before the start of the session. The midday meal is being served regularly in all but four schools, and the quality of food was found to be satisfactory. Attendance of pupils has risen from seventy two to eighty one per cent, which is a considerable achievement in a district where many children must walk long distances over difficult roads.\n\nHowever, I must draw your attention to certain shortcomings. Eleven schools have only one teacher for all classes, and in such cases the quality of teaching suffers greatly. Six schools do not have a usable toilet for girls, and this is one of the main reasons why older girls stop attending. Several libraries contain old books that are of little interest to children, and the science kits supplied last year have not been unpacked in nine schools.\n\nI therefore recommend that more teachers be posted to the schools that are short of staff, and that funds be released at an early date for the construction of toilets. The teachers should also be given a short course on the use of the science kits. I further suggest that the committees of parents be encouraged to meet every month, because their interest has proved to be the best guarantee of regular attendance.\n\nDuring my visits, I also observed the work of the village education committees, which have taken a keen interest in the welfare of the schools. In one village, the members collected money from households to buy a water filter, and in another they repaired the boundary wall with their own labour. I found, however, that records of the funds received for school maintenance are not kept properly in several places, and some headmasters were unable to explain how the money had been spent. It would be advisable to issue a simple format for accounts and to arrange a short training for the headmasters at the block level. I also noted that the inspection of schools by block officers has been irregular, and that many schools had not been visited for more than a year. More frequent visits would help teachers to feel supported and would allow problems to be solved before they grow larger. Teachers in the remote schools deserve very special mention, as many of them live far from their families and work in difficult conditions.\n\nI would be grateful if necessary orders could be issued at the earliest. I remain, Sir, your obedient servant."}, {"y": "newspaper article", "t": "After waiting for more than thirty years, the residents of a remote hill village finally saw the first vehicle arrive on Saturday, when the new all weather road was opened to the public by the Chief Minister. Hundreds of people gathered along the route, and many of them wore traditional dress to welcome the guests. Drums were played, and children waved small flags as the convoy moved slowly towards the village square.\n\nThe road, which is twenty six kilometres long, connects the village with the district headquarters. Until now, the villagers had to walk for nearly two days to reach the nearest hospital or market. During the monsoon, the path often became impassable, and patients were carried on bamboo stretchers across swollen streams. Several families said that they had lost relatives who could not be taken to a doctor in time.\n\nSpeaking at the ceremony, the Chief Minister said that the road was not merely a strip of tarmac but a lifeline that would bring health, education and trade to the area. He announced that an ambulance would be stationed in the village and that a regular bus service would begin within a month. Officials of the Public Works Department explained that the construction had been delayed many times by landslides and heavy rain, and that the engineers had to build seven small bridges and a number of retaining walls.\n\nFarmers in the village are hopeful that the road will change their lives. They grow oranges, ginger and large cardamom, but until now much of the produce was spoiled before it could reach a buyer. A cooperative society has already been formed, and its members plan to send the first truck of oranges to the city next week. A young teacher, who has served in the local school for five years, said that the road would make it easier for new teachers to accept a posting in the village.\n\nLocal shopkeepers were equally pleased. One of them, who runs a small grocery near the square, said that he had always carried goods on his back from a market many miles away. With the new road, he expects to receive supplies by truck and to sell them at lower prices. Women of the village, who weave cloth in traditional patterns, also hope to find customers in the town. The district administration has agreed to hold a fair next month so that visitors can see the work of local artisans. Tourist guides believe that the road will open up the nearby valley, which is known for its forests, waterfalls and rare birds, to people who have never been able to visit it. Environmentalists have asked that visitors should be guided carefully, so that the beauty of the place is not damaged by careless visitors.\n\nThe government has promised to maintain the road throughout the year and to set up a small repair unit near the village. Residents have also pledged to keep the drains clear and to plant trees on the slopes."}, {"y": "science and technology essay", "t": "Energy is the foundation of modern life, and the way in which a country produces it shapes its economy, its health and its environment. For more than a century, the world has depended mainly on coal, oil and gas. These fuels have given us factories, vehicles and electric light, but they have also filled the air with harmful gases and warmed the planet. Scientists now agree that the use of fossil fuels must be reduced, and solar power is one of the most promising alternatives.\n\nSolar energy comes directly from the sun, and it is available in almost every part of the world. A solar panel is made of thin slices of silicon, which produce a small electric current when sunlight falls on them. Many such cells are joined together to form a panel, and many panels together can supply power to a home, a school or even a small town. Unlike a generator, a panel has no moving parts, makes no noise and needs very little attention.\n\nThe cost of solar panels has fallen steadily over the last ten years, and this has made them affordable for ordinary families. In many villages that are far from the main grid, a few panels and a battery now provide light in the evening, power for a water pump and a means of charging mobile phones. Children can study after dark, and farmers can irrigate their fields without buying expensive diesel. Larger solar parks, built on dry and unused land, are also sending electricity to cities.\n\nNevertheless, there are difficulties that must be solved. The sun does not shine at night, and clouds reduce the output during the rainy season, so the energy must be stored in batteries or combined with other sources. The manufacture of panels requires careful handling of chemicals, and old panels need to be recycled safely. Land is also limited, and it must be shared with agriculture and forests.\n\nEducation and awareness are equally important. Schools and colleges should teach students how solar devices work and encourage them to build simple models. Training centres can prepare technicians to install and repair panels, so that every village has someone who can look after its equipment. Banks and the government may offer loans and subsidies, which will help poor families to purchase a system without a heavy burden. Some towns have already required new buildings to include rooftop panels. Manufacturers should be encouraged to make panels in the country itself, which will lower the price and give work to skilled people. Regular tests must also be carried out to make sure that every product meets the proper standard of quality and safety.\n\nWith wise planning and steady research, these problems can be overcome. A country that makes full use of the sun will spend less on imported fuel, create new jobs for its young people and leave cleaner air for the next generation. The sun is a gift that costs nothing, and it is for us to use it well."}]);
+let lastB=-1;
+$('gsample').onclick=()=>{const ty=$('gtype').value,all=BANK.map((b,i)=>i).filter(i=>i!==lastB);let c=all.filter(i=>BANK[i].y===ty);if(!c.length)c=all;const i=c[Math.floor(Math.random()*c.length)];lastB=i;setPassage(BANK[i].t);$('gmsg').textContent='Loaded a '+BANK[i].y+' ('+tok(BANK[i].t).length+' words). Press again for another.'};
+function getKey(){try{return localStorage.getItem('steno_key')||''}catch(e){return ''}}
+async function viaKey(prompt,key){let r;
+try{r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-5-5',max_tokens:2500,messages:[{role:'user',content:prompt}]})})}catch(e){throw {apiMsg:'Could not reach the API. Check your internet connection.'}}
+const j=await r.json().catch(()=>({}));
+if(!r.ok)throw {apiMsg:'The API replied: '+((j.error&&j.error.message)||r.status)};
+return {text:(j.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('')}}
+if(getKey())$('gkey').placeholder='Key saved. Paste a new one to replace it.';
+$('gkeySave').onclick=()=>{const v=$('gkey').value.trim();if(!v)return;try{localStorage.setItem('steno_key',v);$('gkey').value='';$('gmsg').textContent='Key saved in this browser.'}catch(e){$('gmsg').textContent='Could not save the key here.'}};
+$('gkeyClear').onclick=()=>{try{localStorage.removeItem('steno_key')}catch(e){}$('gmsg').textContent='Key removed.'};
+$('gen').onclick=async()=>{
+const n=clamp(+$('glen').value||500,50,1000),type=$('gtype').value,topic=$('gtopic').value.trim(),msg=$('gmsg'),btn=$('gen');
+let sample=null;try{sample=window.claude?await claude.use('sample'):null}catch(e){}
+const key=getKey();
+if(!sample&&!key){msg.textContent='Generating is not available here. Add your own API key below, or press Random passage.';return}
+btn.disabled=true;msg.textContent='Writing your passage…';
+const prompt='Write a '+type+(topic?' about '+topic:' on a topic of your choice')+' of exactly '+n+' words, for English stenography dictation practice. Rules: British English spelling; clear, coherent, natural formal prose that makes sense from start to finish; vocabulary of the kind used in office and public-service dictation; use only commas and full stops as punctuation (no semicolons, colons, dashes, brackets, quotation marks, bullet points or headings); write most numbers in words; two to six short paragraphs; full stops and commas do not count as words. Output only the passage text, with no title and no commentary.';
+try{const r=sample?await sample(prompt,{cache:false,onText:({text})=>{if(text)setPassage(text)}}):await viaKey(prompt,key);
+const t=(r.text||'').trim();setPassage(t);const c=tok(t).length;
+msg.textContent='Generated '+c+' words'+(Math.abs(c-n)>n*.03?'. The count is a little off the target, so press Generate again if you need it closer.':'.')}
+catch(e){msg.textContent=e&&e.code==='not_granted'?'Permission was declined. Allow it and try again, or use the sample passage.':e&&e.code==='rate_limited'?'Too many requests. Wait a minute and try again.':(e&&e.apiMsg?e.apiMsg:'Could not generate a passage. Try again, or press Random passage.')}
+finally{btn.disabled=false}};
+</script>
+</body>
+</html>
