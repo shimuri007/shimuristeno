@@ -198,7 +198,7 @@ let lim=Math.round(wpm*mins);
 // exam count ignores stray punctuation tokens
 const take=[];let c=0;for(const w of words){take.push(w);if(tok(w).length&&++c>=lim)break}
 dictated={count:c,wpm};
-const cs=wpm<=30?2:wpm<=60?3:4;chunks=[];for(let i=0;i<take.length;i+=cs)chunks.push(take.slice(i,i+cs));
+chunks=take.filter(w=>tok(w).length).map(w=>[w]);
 speechSynthesis.cancel();const id=++run;cur=0;paused=false;setBtn(true);$('dPause').textContent='Pause';
 let n=3;dStatus('Get ready… '+n);const cd=setInterval(()=>{if(id!==run){clearInterval(cd);return}n--;if(n>0)dStatus('Get ready… '+n);else{clearInterval(cd);begin(id)}},1000)}
 function begin(id){dStatus('Dictating at '+dictated.wpm+' wpm…');t0=Date.now();go(id)}
@@ -211,7 +211,7 @@ const target=t0+cur*slot();const wait=Math.max(0,target-Date.now());
 setTimeout(()=>{if(id!==run||paused)return;
 const u=new SpeechSynthesisUtterance(chunks[cur].join(' '));const v=voices[+$('voice').value||0];
 if(v){u.voice=v;u.lang=v.lang}else u.lang='en-GB';
-u.rate=clamp(dictated.wpm/150,.6,1.4);
+u.rate=dictated.wpm<=60?0.9:dictated.wpm<=100?1.1:1.3;
 u.onend=()=>{if(id!==run)return;$('dSpoken').textContent=Math.min(dictated.count,(cur+1)*chunks[0].length);cur++;go(id)};
 u.onerror=()=>{if(id!==run)return;cur++;go(id)};
 speechSynthesis.speak(u)},wait)}
